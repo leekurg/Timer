@@ -1,4 +1,4 @@
-# PicViewer
+# TimerApp
 Swift/UIKit app for time measurment
 
 ### Installation ####
