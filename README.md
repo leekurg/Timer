@@ -10,6 +10,7 @@ Swift/UIKit app for time measurment
 #### Features: ####
    - Start/pause time count
    - Reset timer
+   - Long press gesture on time label to reset timer
 
 #### Technology stack: ####
   - Swift/UIKit

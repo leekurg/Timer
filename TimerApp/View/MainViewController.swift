@@ -16,6 +16,7 @@ class MainViewController: UIViewController {
     private var timerLabel: UILabel!
     private var buttonStartPause: UIButton!
     private var buttonReset: UIButton!
+    private var gestureReset: UILongPressGestureRecognizer!
     
     private var timer: Timer!
     private var timerValue = 0.0 {
@@ -27,12 +28,6 @@ class MainViewController: UIViewController {
         didSet{
             if timerActive {
                 buttonStartPause.setImage( UIImage(named: "pause.pdf"), for: .normal)
-                    
-//                {
-//                    UIView.animate(withDuration: 1.0) {
-//                            button.layer.backgroundColor =  UIColor.red.cgColor
-//                    }
-//                }()
                 
                 buttonStartPause.backgroundColor = UIColor(red: 237/255, green: 65/255, blue: 21/255, alpha: 1)
                 buttonReset.isEnabled = false
@@ -58,7 +53,19 @@ class MainViewController: UIViewController {
         timerLabel = {
             let label = UILabel()
             label.font = UIFont(name: "AvenirNext-UltraLight", size: 120)
+            label.layer.cornerRadius = 40
+            label.layer.backgroundColor =  UIColor(red: 1, green: 0, blue: 0, alpha: 0).cgColor
+            label.isUserInteractionEnabled = true
+            label.layer.shadowColor = UIColor.red.cgColor
+            label.layer.shadowOpacity = 0.0
+            label.layer.shadowRadius = 5.0
             
+            gestureReset = UILongPressGestureRecognizer(target: self, action: #selector(resetGestureDidPerformed))
+            if let gesture = gestureReset {
+                gesture.minimumPressDuration = 1
+                gesture.delaysTouchesBegan = true
+                label.addGestureRecognizer(gesture)
+            }
             return label
         }()
         updateTimerLabel()
@@ -125,6 +132,7 @@ class MainViewController: UIViewController {
     //MARK: - Actions
     @objc func playPauseButtonDidTouch()
     {
+        animateButtonPressed(button: buttonStartPause)
         if !timerActive {   //play
             createTimer()
         }
@@ -135,9 +143,53 @@ class MainViewController: UIViewController {
     
     @objc func resetButtonDidTouch()
     {
+        animateLabelToRed()
         stopTimer( resetValue: true )
+        animateLabelFromRed()
     }
     
+    @objc func resetGestureDidPerformed()
+    {
+        if gestureReset?.state == .began {
+            animateLabelToRed()
+            stopTimer(resetValue: true)
+        }
+        else if gestureReset?.state == .ended {
+            animateLabelFromRed()
+        }
+        
+    }
+    
+    //MARK: - Animation
+    private func animateLabelToRed() {
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.timerLabel.layer.backgroundColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0.1).cgColor
+            self?.timerLabel.layer.shadowOpacity = 0.5
+        }
+    }
+    
+    private func animateLabelFromRed() {
+        UIView.animate(withDuration: 0.5) { [weak self] in
+            self?.timerLabel.layer.backgroundColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0).cgColor
+            self?.timerLabel.layer.shadowOpacity = 0
+        }
+    }
+    
+    private func animateButtonPressed( button: UIButton ) {
+
+            button.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+
+            UIView.animate(withDuration: 1.0,
+                           delay: 0,
+                           usingSpringWithDamping: CGFloat(10.0),
+                           initialSpringVelocity: CGFloat(4.0),
+                           options: UIView.AnimationOptions.allowUserInteraction,
+                           animations: {
+                                button.transform = CGAffineTransform.identity
+                            },
+                           completion: { Void in()  }
+            )
+    }
     
     //MARK: - Timer
     private func createTimer() {
