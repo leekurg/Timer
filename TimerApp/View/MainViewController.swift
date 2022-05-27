@@ -11,6 +11,7 @@ import SnapKit
 
 class MainViewController: UIViewController {
     
+    private let userDefaults = UserDefaults.standard
     private let timerInterval = 0.01
     
     private var timerLabel: UILabel!
@@ -19,7 +20,7 @@ class MainViewController: UIViewController {
     private var gestureReset: UILongPressGestureRecognizer!
     
     private var timer: Timer!
-    private var timerValue = 0.0 {
+    private var timerValue: Double = 0.0 {
         didSet{
             updateTimerLabel()
         }
@@ -46,6 +47,7 @@ class MainViewController: UIViewController {
         view.backgroundColor = UIColor(red: 204/255, green: 227/255, blue: 220/255, alpha: 1)
         
         setupUI()
+        handleAppStart()
     }
     
     private func setupUI() {
@@ -54,15 +56,11 @@ class MainViewController: UIViewController {
             let label = UILabel()
             label.font = UIFont(name: "AvenirNext-UltraLight", size: 120)
             label.layer.cornerRadius = 40
-            label.layer.backgroundColor =  UIColor(red: 1, green: 0, blue: 0, alpha: 0).cgColor
             label.isUserInteractionEnabled = true
-            label.layer.shadowColor = UIColor.red.cgColor
-            label.layer.shadowOpacity = 0.0
-            label.layer.shadowRadius = 5.0
             
             gestureReset = UILongPressGestureRecognizer(target: self, action: #selector(resetGestureDidPerformed))
             if let gesture = gestureReset {
-                gesture.minimumPressDuration = 1
+                gesture.minimumPressDuration = 0.5
                 gesture.delaysTouchesBegan = true
                 label.addGestureRecognizer(gesture)
             }
@@ -143,9 +141,8 @@ class MainViewController: UIViewController {
     
     @objc func resetButtonDidTouch()
     {
-        animateLabelToRed()
         stopTimer( resetValue: true )
-        animateLabelFromRed()
+        animateLabelToRed( completion: animateLabelFromRed(done:) )
     }
     
     @objc func resetGestureDidPerformed()
@@ -160,18 +157,38 @@ class MainViewController: UIViewController {
         
     }
     
-    //MARK: - Animation
-    private func animateLabelToRed() {
-        UIView.animate(withDuration: 0.2) { [weak self] in
-            self?.timerLabel.layer.backgroundColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0.1).cgColor
-            self?.timerLabel.layer.shadowOpacity = 0.5
-        }
+    //MARK: - Save/Restore session
+    private func handleAppStart() {
+        guard let timeStamp = userDefaults.object(forKey: UserDefaultKeys.keyTimestamp.rawValue) as? Date,
+              let timerValue = userDefaults.object(forKey: UserDefaultKeys.keyTimerValue.rawValue) as? Double
+        else {  return  }
+        
+        userDefaults.set( 0,forKey: UserDefaultKeys.keyTimerValue.rawValue)
+        if timerValue == 0  {   return  }
+        
+        let interval = timeStamp.distance(to: Date.now)
+        
+        self.timerValue = timerValue + interval
+        playPauseButtonDidTouch()
+    }
+    func hanleAppExit() {
+        if !timerActive { return }
+        
+        userDefaults.set( Date.now,forKey: UserDefaultKeys.keyTimestamp.rawValue)
+        userDefaults.set( timerValue,forKey: UserDefaultKeys.keyTimerValue.rawValue)
     }
     
-    private func animateLabelFromRed() {
-        UIView.animate(withDuration: 0.5) { [weak self] in
-            self?.timerLabel.layer.backgroundColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0).cgColor
-            self?.timerLabel.layer.shadowOpacity = 0
+    //MARK: - Animation
+    private func animateLabelToRed(completion: ((Bool) -> Void)? = nil) {
+        UIView.transition(with: timerLabel, duration: 0.2, options: .transitionCrossDissolve,
+                          animations: { self.timerLabel.textColor = .red },
+                          completion: completion
+        )
+    }
+    
+    private func animateLabelFromRed( done: Bool = true ) {
+        UIView.transition(with: timerLabel, duration: 0.5, options: .transitionCrossDissolve) {
+            self.timerLabel.textColor = .black
         }
     }
     
@@ -216,5 +233,12 @@ class MainViewController: UIViewController {
     
     @objc private func updateTimer() {
         timerValue += timerInterval
+    }
+}
+
+extension MainViewController {
+    enum UserDefaultKeys: String{
+        case keyTimestamp = "timestamp"
+        case keyTimerValue = "timervalue"
     }
 }
