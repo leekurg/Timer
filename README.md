@@ -1,6 +1,6 @@
 # TimerApp #
 _
-    <img src="https://user-images.githubusercontent.com/105886145/170714295-3aeae3a7-2a53-470e-8a33-d0420beb6484.png" width="400"> 
+    <img src="https://user-images.githubusercontent.com/105886145/171059187-1ec8d149-595f-4aed-9477-0314a8325531.gif" width="400"> 
     
 ### About ###
 Swift/UIKit app for time measurment
@@ -19,6 +19,6 @@ Swift/UIKit app for time measurment
 
 ### Installation ####
 ```sh
-   cd .../Timer
+   cd .../TimerApp
    pod install 
 ```
